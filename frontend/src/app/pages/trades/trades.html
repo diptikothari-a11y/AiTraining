@@ -1,0 +1,156 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Trades</h1>
+      <p>Record buys and sells; holdings and P&amp;L update automatically</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <form class="card order" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="card-header">
+        <h2>New trade</h2>
+        <span class="spacer"></span>
+        <div class="segmented" role="group" aria-label="Trade side">
+          <button type="button" class="buy" [class.active]="form.controls.side.value === 'BUY'" (click)="setSide('BUY')">Buy</button>
+          <button type="button" class="sell" [class.active]="form.controls.side.value === 'SELL'" (click)="setSide('SELL')">Sell</button>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="symbol">Stock</label>
+          <select id="symbol" class="input" formControlName="symbol">
+            <option value="" disabled>Select a stock</option>
+            @for (s of stocks(); track s.symbol) {
+              <option [value]="s.symbol">{{ s.symbol }} — {{ s.name }}</option>
+            }
+          </select>
+          @if (selected(); as s) {
+            <span class="subtle">
+              LTP <b class="num">{{ s.ltp | inr }}</b>
+              <span [class]="s.change >= 0 ? 'profit' : 'loss'"> {{ s.change >= 0 ? '+' : '' }}{{ s.change_pct.toFixed(2) }}%</span>
+              · {{ s.sector }}
+            </span>
+          } @else if (form.controls.symbol.touched) {
+            <span class="error">Choose a stock</span>
+          }
+        </div>
+
+        <div class="split">
+          <div class="field">
+            <label for="qty">Quantity</label>
+            <input id="qty" class="input num" type="number" min="1" step="1" formControlName="quantity" />
+            @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
+              <span class="error">Whole number, at least 1</span>
+            }
+          </div>
+          <div class="field">
+            <label for="price">Price (₹)</label>
+            <input id="price" class="input num" type="number" min="0.05" step="0.05" formControlName="price" />
+            @if (form.controls.price.touched && form.controls.price.invalid) {
+              <span class="error">Enter a valid price</span>
+            }
+          </div>
+        </div>
+
+        <div class="split">
+          <div class="field">
+            <label for="date">Trade date</label>
+            <input id="date" class="input" type="date" [max]="maxDate" formControlName="trade_date" />
+          </div>
+          <div class="field">
+            <label for="exchange">Exchange</label>
+            <select id="exchange" class="input" formControlName="exchange">
+              <option value="NSE">NSE</option>
+              <option value="BSE">BSE</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="total">
+          <span class="muted">Trade value</span>
+          <b class="num">{{ orderValue() | inr }}</b>
+        </div>
+
+        @if (formError()) {
+          <div class="alert alert-error" role="alert">{{ formError() }}</div>
+        }
+        @if (success()) {
+          <div class="alert alert-info" role="status">{{ success() }}</div>
+        }
+
+        <button
+          type="submit"
+          class="btn btn-block"
+          [class.btn-buy]="form.controls.side.value === 'BUY'"
+          [class.btn-sell]="form.controls.side.value === 'SELL'"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving…' : form.controls.side.value === 'BUY' ? 'Record buy' : 'Record sell' }}
+        </button>
+      </div>
+    </form>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Trade book</h2>
+        <span class="subtle">{{ visibleTrades().length }} trades</span>
+        <span class="spacer"></span>
+        <div class="segmented" role="group" aria-label="Filter trades">
+          <button type="button" [class.active]="filter() === 'ALL'" (click)="filter.set('ALL')">All</button>
+          <button type="button" [class.active]="filter() === 'BUY'" (click)="filter.set('BUY')">Buys</button>
+          <button type="button" [class.active]="filter() === 'SELL'" (click)="filter.set('SELL')">Sells</button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-error" role="alert">{{ error() }}</div>
+      }
+
+      @if (loading()) {
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton" style="margin: 14px 0"></div>
+        }
+      } @else {
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Stock</th>
+                <th>Type</th>
+                <th class="right">Qty</th>
+                <th class="right">Price</th>
+                <th class="right">Value</th>
+                <th><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of visibleTrades(); track t.id) {
+                <tr>
+                  <td class="num">{{ t.trade_date | date: 'dd MMM yyyy' }}</td>
+                  <td>
+                    <div class="sym">{{ t.symbol }}</div>
+                    <div class="subtle">{{ t.exchange }}</div>
+                  </td>
+                  <td><span class="badge" [class]="t.side === 'BUY' ? 'buy' : 'sell'">{{ t.side }}</span></td>
+                  <td class="right num">{{ t.quantity | qty }}</td>
+                  <td class="right num">{{ t.price | inr }}</td>
+                  <td class="right num">{{ t.value | inr }}</td>
+                  <td class="right">
+                    <button class="btn btn-ghost icon-btn" (click)="remove(t)" [attr.aria-label]="'Delete trade ' + t.id" title="Delete">
+                      <app-icon name="trash" [size]="16" />
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="empty">No trades yet. Record your first one on the left.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
+</div>

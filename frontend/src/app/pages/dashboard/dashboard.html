@@ -1,0 +1,137 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>{{ greeting() }}, {{ auth.user()?.name?.split(' ')?.[0] }}</h1>
+      <p>
+        Here's how your portfolio is doing
+        @if (updatedAt(); as t) {
+          <span class="subtle">· updated {{ t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }}</span>
+        }
+      </p>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn btn-outline" (click)="refreshPrices()" [disabled]="refreshing()">
+      <app-icon name="refresh" [class.spin]="refreshing()" />
+      Refresh prices
+    </button>
+    <a class="btn btn-primary" routerLink="/trades"><app-icon name="plus" /> Add trade</a>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="grid kpis">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="card kpi"><div class="skeleton" style="width: 50%"></div><div class="skeleton" style="height: 28px; margin-top: 12px"></div></div>
+      }
+    </div>
+  } @else if (summary(); as s) {
+    <section class="grid kpis" aria-label="Portfolio summary">
+      <div class="card kpi highlight">
+        <div class="label">Current value</div>
+        <div class="value num">{{ s.current_value | inr }}</div>
+        <div class="sub muted">{{ s.holdings_count }} holdings</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Invested</div>
+        <div class="value num">{{ s.invested | inr }}</div>
+        <div class="sub muted">Realised P&amp;L <span class="num" [class]="s.realised_pnl | tone">{{ s.realised_pnl | inr: 'signed' }}</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Total P&amp;L</div>
+        <div class="value num" [class]="s.total_pnl | tone">{{ s.total_pnl | inr: 'signed' }}</div>
+        <div class="sub"><span class="chip num" [class]="s.total_pnl_pct | tone">{{ s.total_pnl_pct | pct }}</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Today's P&amp;L</div>
+        <div class="value num" [class]="s.day_pnl | tone">{{ s.day_pnl | inr: 'signed' }}</div>
+        <div class="sub"><span class="chip num" [class]="s.day_pnl_pct | tone">{{ s.day_pnl_pct | pct }}</span></div>
+      </div>
+    </section>
+
+    @if (s.holdings_count === 0) {
+      <div class="card empty">
+        <div class="title">Your portfolio is empty</div>
+        <p>Record your first buy to start tracking P&amp;L.</p>
+        <a class="btn btn-primary" routerLink="/trades"><app-icon name="plus" /> Add your first trade</a>
+      </div>
+    } @else {
+      <section class="grid two-col">
+        <div class="card">
+          <div class="card-header"><h2>Sector allocation</h2></div>
+          <app-donut-chart [slices]="sectorSlices()" ariaLabel="Portfolio allocation by sector">
+            <div class="subtle">Value</div>
+            <div class="donut-value num">{{ s.current_value | inr: 'compact' }}</div>
+          </app-donut-chart>
+        </div>
+
+        <div class="card movers">
+          <div class="card-header"><h2>Top performers</h2></div>
+          <h3 class="subtle">Gainers</h3>
+          @for (h of s.top_gainers; track h.symbol) {
+            <div class="mover">
+              <div><div class="sym">{{ h.symbol }}</div><div class="subtle">{{ h.name }}</div></div>
+              <div class="right"><div class="num profit">{{ h.pnl | inr: 'signed' }}</div><div class="chip profit num">{{ h.pnl_pct | pct }}</div></div>
+            </div>
+          } @empty {
+            <p class="subtle">No holdings in profit yet.</p>
+          }
+          <h3 class="subtle">Losers</h3>
+          @for (h of s.top_losers; track h.symbol) {
+            <div class="mover">
+              <div><div class="sym">{{ h.symbol }}</div><div class="subtle">{{ h.name }}</div></div>
+              <div class="right"><div class="num loss">{{ h.pnl | inr: 'signed' }}</div><div class="chip loss num">{{ h.pnl_pct | pct }}</div></div>
+            </div>
+          } @empty {
+            <p class="subtle">No holdings in loss.</p>
+          }
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Top holdings</h2>
+          <span class="spacer"></span>
+          <a routerLink="/holdings">View all</a>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th class="right">Qty</th>
+                <th class="right">LTP</th>
+                <th class="right">Current value</th>
+                <th class="right">P&amp;L</th>
+                <th class="right">Weight</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of topHoldings(); track h.symbol) {
+                <tr>
+                  <td><div class="sym">{{ h.symbol }}</div><div class="subtle">{{ h.sector }}</div></td>
+                  <td class="right num">{{ h.quantity | qty }}</td>
+                  <td class="right num">
+                    {{ h.ltp | inr }}
+                    <div class="subtle" [class]="h.day_change_pct | tone">{{ h.day_change_pct | pct }}</div>
+                  </td>
+                  <td class="right num">{{ h.current_value | inr }}</td>
+                  <td class="right num" [class]="h.pnl | tone">
+                    {{ h.pnl | inr: 'signed' }}
+                    <div class="subtle">{{ h.pnl_pct | pct }}</div>
+                  </td>
+                  <td class="right">
+                    <div class="bar"><span [style.width.%]="h.weight_pct"></span></div>
+                    <span class="subtle num">{{ h.weight_pct.toFixed(1) }}%</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</div>

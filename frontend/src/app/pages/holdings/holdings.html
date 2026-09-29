@@ -1,0 +1,98 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Holdings</h1>
+      <p>Long-term equity positions, valued at the last traded price (LTP)</p>
+    </div>
+    <span class="spacer"></span>
+    <div class="search">
+      <app-icon name="search" [size]="16" />
+      <input
+        class="input"
+        placeholder="Search stock or sector"
+        aria-label="Search holdings"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+    </div>
+    <button class="btn btn-outline" (click)="exportCsv()" [disabled]="!rows().length">Export CSV</button>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">{{ error() }}</div>
+  }
+
+  <section class="card">
+    @if (loading()) {
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="skeleton" style="margin: 14px 0"></div>
+      }
+    } @else if (!holdings().length) {
+      <div class="empty">
+        <div class="title">No holdings yet</div>
+        <p>Add a buy trade and it will show up here.</p>
+        <a class="btn btn-primary" routerLink="/trades"><app-icon name="plus" /> Add trade</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              @for (c of columns; track c.key) {
+                <th
+                  class="sortable"
+                  [class.right]="c.right"
+                  (click)="sort(c.key)"
+                  [attr.aria-sort]="sortKey() === c.key ? (sortDir() === 1 ? 'ascending' : 'descending') : null"
+                >
+                  {{ c.label }}
+                  @if (sortKey() === c.key) {
+                    <span class="sort-ind">{{ sortDir() === 1 ? '▲' : '▼' }}</span>
+                  }
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of rows(); track h.symbol) {
+              <tr>
+                <td>
+                  <div class="sym">{{ h.symbol }}</div>
+                  <div class="subtle">{{ h.name }}</div>
+                </td>
+                <td class="right num">{{ h.quantity | qty }}</td>
+                <td class="right num">{{ h.avg_price | inr }}</td>
+                <td class="right num">{{ h.ltp | inr }}</td>
+                <td class="right num">{{ h.invested | inr }}</td>
+                <td class="right num">{{ h.current_value | inr }}</td>
+                <td class="right num" [class]="h.pnl | tone">{{ h.pnl | inr: 'signed' }}</td>
+                <td class="right num" [class]="h.pnl_pct | tone">{{ h.pnl_pct | pct }}</td>
+                <td class="right num" [class]="h.day_change | tone">
+                  {{ h.day_change | inr: 'signed' }}
+                  <div class="subtle">{{ h.day_change_pct | pct }}</div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="9" class="empty">No holdings match “{{ query() }}”.</td></tr>
+            }
+          </tbody>
+          @if (rows().length) {
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="right num">{{ totals().invested | inr }}</td>
+                <td class="right num">{{ totals().current | inr }}</td>
+                <td class="right num" [class]="totals().pnl | tone">{{ totals().pnl | inr: 'signed' }}</td>
+                <td class="right num" [class]="totals().pnlPct | tone">{{ totals().pnlPct | pct }}</td>
+                <td class="right num" [class]="totals().day | tone">{{ totals().day | inr: 'signed' }}</td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    }
+  </section>
+</div>

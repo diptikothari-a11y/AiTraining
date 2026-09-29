@@ -1,0 +1,84 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Watchlist</h1>
+      <p>Stocks you're tracking but may not own yet</p>
+    </div>
+  </header>
+
+  <div class="search">
+    <app-icon name="search" [size]="16" />
+    <input
+      class="input"
+      placeholder="Search NIFTY 50 stocks to add (e.g. INFY, Tata)"
+      aria-label="Search stocks to add"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      (keydown.escape)="query.set('')"
+    />
+    @if (suggestions().length) {
+      <ul class="suggest" role="listbox">
+        @for (s of suggestions(); track s.symbol) {
+          <li>
+            <button type="button" (click)="add(s)">
+              <span><b>{{ s.symbol }}</b> <span class="subtle">{{ s.name }}</span></span>
+              <span class="row">
+                <span class="num">{{ s.ltp | inr }}</span>
+                <app-icon name="plus" [size]="16" />
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else if (query().trim()) {
+      <ul class="suggest"><li class="none subtle">No matching stocks, or already on your list</li></ul>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="cards">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="card"><div class="skeleton"></div><div class="skeleton" style="margin-top: 12px; height: 24px"></div></div>
+      }
+    </div>
+  } @else if (!items().length) {
+    <div class="card empty">
+      <div class="title">Your watchlist is empty</div>
+      <p>Search above to add stocks you want to keep an eye on.</p>
+    </div>
+  } @else {
+    <div class="cards">
+      @for (s of items(); track s.symbol) {
+        <article class="card stock">
+          <div class="row">
+            <div>
+              <div class="sym">{{ s.symbol }}</div>
+              <div class="subtle">{{ s.name }}</div>
+            </div>
+            <span class="spacer"></span>
+            <button class="btn btn-ghost icon-btn" (click)="remove(s)" [attr.aria-label]="'Remove ' + s.symbol" title="Remove">
+              <app-icon name="x" [size]="16" />
+            </button>
+          </div>
+          <div class="price num">{{ s.ltp | inr }}</div>
+          <div class="row">
+            <span class="chip num" [class]="s.change | tone">
+              <app-icon [name]="s.change >= 0 ? 'up' : 'down'" [size]="14" />
+              {{ s.change | inr: 'signed' }} ({{ s.change_pct | pct }})
+            </span>
+            <span class="spacer"></span>
+            <span class="badge neutral">{{ s.sector }}</span>
+          </div>
+          <div class="actions">
+            <a class="btn btn-sm btn-buy" routerLink="/trades" [queryParams]="{ symbol: s.symbol, side: 'BUY' }">Buy</a>
+            <a class="btn btn-sm btn-sell" routerLink="/trades" [queryParams]="{ symbol: s.symbol, side: 'SELL' }">Sell</a>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

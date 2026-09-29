@@ -1,0 +1,64 @@
+<aside class="sidebar">
+  <a class="brand" routerLink="/dashboard">
+    <span class="logo"><app-icon name="trend" [size]="18" /></span>
+    <span>TradeSmart <b>PMS</b></span>
+  </a>
+
+  <nav>
+    @for (item of nav; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
+        <app-icon [name]="item.icon" />
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="market-note">
+    <span class="dot"></span>
+    NSE · BSE <span class="subtle">(simulated prices)</span>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <a class="brand mobile-only" routerLink="/dashboard">
+      <span class="logo"><app-icon name="trend" [size]="16" /></span>
+      <span>TradeSmart</span>
+    </a>
+    <span class="spacer"></span>
+
+    <button
+      class="btn btn-ghost icon-btn"
+      (click)="theme.toggle()"
+      [attr.aria-label]="theme.theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+    >
+      <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+    </button>
+
+    @if (auth.user(); as user) {
+      <div class="user">
+        <span class="avatar">{{ initials() }}</span>
+        <div class="who">
+          <div class="name">{{ user.name }}</div>
+          <div class="subtle">Client ID {{ user.client_code }}</div>
+        </div>
+      </div>
+    }
+    <button class="btn btn-ghost icon-btn" (click)="auth.logout()" aria-label="Log out" title="Log out">
+      <app-icon name="logout" />
+    </button>
+  </header>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  @for (item of nav; track item.path) {
+    <a [routerLink]="item.path" routerLinkActive="active">
+      <app-icon [name]="item.icon" [size]="20" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+</nav>
