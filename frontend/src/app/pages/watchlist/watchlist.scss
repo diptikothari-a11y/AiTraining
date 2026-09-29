@@ -1,0 +1,85 @@
+.search {
+  position: relative;
+  max-width: 520px;
+  > app-icon {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: var(--text-subtle);
+  }
+  .input {
+    padding-left: 36px;
+    height: 42px;
+  }
+}
+.suggest {
+  position: absolute;
+  z-index: 10;
+  top: 46px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    &:hover,
+    &:focus-visible {
+      background: var(--primary-soft);
+    }
+  }
+  .none {
+    padding: 10px;
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.stock {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  .row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badge {
+    white-space: nowrap;
+  }
+  .sym {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .price {
+    font-size: 24px;
+    font-weight: 600;
+  }
+}
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+  a {
+    text-decoration: none;
+  }
+}
