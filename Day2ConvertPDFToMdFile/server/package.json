@@ -1,0 +1,14 @@
+{
+  "name": "pdf-to-md-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "pdfjs-dist": "^4.10.38"
+  }
+}
